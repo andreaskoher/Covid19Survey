@@ -1,16 +1,16 @@
-# HOPESurvey
+# Covid19Survey
 
 <!-- [![Build Status](https://github.com/andreaskoher/HOPESurvey.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/andreaskoher/HOPESurvey.jl/actions/workflows/CI.yml?query=branch%3Amain) -->
 <!-- [![Coverage](https://codecov.io/gh/andreaskoher/HOPESurvey.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/andreaskoher/HOPESurvey.jl) -->
 
-The epidemiological model is a variant of the popular semi-mechanistic approach of Flaxman et al. [2] and Unwin et. al. [3] as well as the related [Epidemia package](https://imperialcollegelondon.github.io/epidemia/index.html). The code is entirely written in the [Julia language](https://julialang.org/) and we perform inference using the MCMC package [Turing.jl](https://turing.ml/).
+This package implements the epidemiological model and data preprocessing steps of the publication **"Monitoring Public behaviour During a Pandemic Using Surveys: Proof-of-Concept Via Epidemic Modelling"** [1]. The epidemiological model is a variant of the popular semi-mechanistic approach of Flaxman et al. [2] and Unwin et. al. [3] as well as the related [Epidemia package](https://imperialcollegelondon.github.io/epidemia/index.html). The code is entirely written in the [Julia language](https://julialang.org/) and we perform inference using the MCMC package [Turing.jl](https://turing.ml/).
 
 # prerequisites
 
-The implementation has been tested on *Julia 1.6*. Please, install the correct dependencies with the following steps:
+The implementation has been tested on *Julia 1.6*. After starting Julia, please change to the project directory, enter the `pgk>` environment by pressing `]`, activate the project and instantiate to download the correct dependencies:
 
 ```
-julia> cd("path/to/project")
+julia> cd("path/to/Covid19Survey")
 pkg> activate .
 pkg> instantiate
 ```
@@ -52,7 +52,7 @@ We first discuss how to reproduce Fig. 2 and Fig. 3 in the publication using `in
 --predictors, -p    list of predictors from data/data_with_predictors.csv separated by comma (default: total-above18,google,apple,telco)
 ```
 
-The comparison between self-reported survey data (more precisely: fraction of individuals that report above 18 contacts in total, *total-above18*), google mobility data (*google*), apple mobility data (*apple*) and data provided by danish telecommunication companies (*telco*):
+The predictors correspond to columns in the column names in the data file `scripts/data_with_predictors.jl` (see *pre-processing*). As an example, we reproduce the data underlying Fig. 2, i.e., the comparison between self-reported survey data (more precisely: fraction of individuals that report above 18 contacts in total, here: *total-above18*), google mobility data (*google*), apple mobility data (*apple*) and data provided by danish telecommunication companies (*telco*):
 
 ```
 > cd path/to/HOPESurvey/scripts
@@ -67,7 +67,7 @@ Similarly, we run the comparison for context depending risk-taking behaviour wit
 
 ## inference without predictors
 
-In Fig. 1 but also in multiple figures in the appendix, we provide a visual comparison between predictors and the inferred reproduction number. We obtain the latter by executing the following script:
+In Fig. 1 but also in multiple figures in the appendix, we provide a visual comparison between predictors and the inferred reproduction number. We obtain the latter from a daily random walk model of the effective reproduction number without predictors. Executing the following script does the job:
 ```
 > cd path/to/HOPESurvey/scripts
 > julia --threads 5 inference_without_predictors.jl -s 1000 -c 5 -w 1000 -e 8
