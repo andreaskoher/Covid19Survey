@@ -7,7 +7,7 @@ This package implements the epidemiological model and data preprocessing steps o
 
 # prerequisites
 
-The implementation has been tested on *Julia 1.6*. After starting Julia, please change to the project directory, enter the `pgk>` environment by pressing `]`, activate the project and instantiate to download the correct dependencies:
+The implementation has been tested on *Ubuntu 22.04.1* LTS and *Julia 1.6*. After starting Julia, please change to the project directory, enter the `pgk>` environment by pressing `]`, activate the project and instantiate to download the correct dependencies:
 
 ```
 julia> cd("path/to/Covid19Survey")
