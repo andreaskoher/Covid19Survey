@@ -44,6 +44,8 @@ In this case, we start the script with five threads available for parallelizatio
 --target,     -r      target acceptance rate (default 0.99)
 ```
 
+All figures are rendered by the interactive [plotly](https://plotly.com/javascript/) engine saved as html files and can be viewed with, e.g., _Chrome_.
+
 ## inference with predictors
 
 We first discuss how to reproduce Fig. 2 and Fig. 3 in the publication using `inference_with_predictors.jl`. The script takes an additional parameter:
