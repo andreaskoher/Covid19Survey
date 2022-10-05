@@ -60,16 +60,17 @@ end
 # ============================================================================
 # post-processing
 
-struct PostProcessing{F,P,I,C,D,M}
+struct PostProcessing{F,P,I,C,D,M,T}
     fdir::F
     ps::P
     ignores::I
     chain::C
     data::D
     model::M
+    ftype::T
 end
 
-function PostProcessing(fdir, ps, ignores, exclude, fname)
+function PostProcessing(fdir, ps, ignores, exclude, fname, ftype)
     chain = let
         chain = read(fname, Chains)
         not(chain, exclude)
@@ -80,7 +81,7 @@ function PostProcessing(fdir, ps, ignores, exclude, fname)
         BSON.load(fn_data)["data"]
     end
 
-    PostProcessing(fdir, ps, ignores, chain, data, ps.model)
+    PostProcessing(fdir, ps, ignores, chain, data, ps.model, ftype)
 end
 
 function not(c::Chains, exclude::AbstractVector=[])
@@ -113,29 +114,29 @@ function savechain(p::PostProcessing)
 end
 
 function plot_chains(p::PostProcessing; plot_results = false)
-    @unpack fdir, ps, ignores, chain = p
+    @unpack fdir, ps, ignores, chain, ftype = p
     n = filter( x->!occursin(r"latent_Rts", x), String.(names(chain)))
     p = plot(chain[n]);
-    fname = normpath( fdir, savename("FIG-CHAINSPLOT", ps, "html"; ignores) )
+    fname = normpath( fdir, savename("FIG-CHAINSPLOT", ps, ftype; ignores) )
     savefig(p, fname )
     plot_results && display(p) #(display(p); run(`firefox $(fname)`, wait=false))
     return nothing
 end
 
 function plot_means(p::PostProcessing; plot_results=false)
-    @unpack fdir, ps, ignores, chain = p
+    @unpack fdir, ps, ignores, chain, ftype = p
     n = filter( x->!occursin(r"latent_Rts", x), String.(names(chain)))
     p = meanplot(chain[n]);
-    fname = normpath( fdir, savename("FIG-MEANPLOT", ps, "html"; ignores) )
+    fname = normpath( fdir, savename("FIG-MEANPLOT", ps, ftype; ignores) )
     savefig(p, fname )
     plot_results && display(p) #(display(p); run(`firefox $(fname)`, wait=false))
     return nothing
 end
 
 function skip_warmup(p::PostProcessing)
-    @unpack fdir, ps, ignores, chain, data, model = p
+    @unpack fdir, ps, ignores, chain, data, model, ftype = p
     chain = chain[ps.warmup+1:end,:,:]
-    PostProcessing(fdir, ps, ignores, chain, data, model)
+    PostProcessing(fdir, ps, ignores, chain, data, model, ftype)
 end
 
 function diagnostics(p::PostProcessing, plot_results = false)
@@ -198,21 +199,21 @@ function generate_posterior(p::PostProcessing)
 end
 
 function plot_regions(p, gp; plot_results = false, kwargs...)
-    @unpack fdir, ps, ignores, data = p
+    @unpack fdir, ps, ignores, data, ftype = p
     for r in data.regions
         recipe = Covid19Survey.RegionPlottingRecipe(data, gp, r)
         p = plot(recipe; kwargs...)
-        fname = normpath( fdir, savename("FIG-PREDICTION-$(uppercase(r))", ps, "html"; ignores) )
+        fname = normpath( fdir, savename("FIG-PREDICTION-$(uppercase(r))", ps, ftype; ignores) )
         savefig( p, fname )
         plot_results && display(p) #(display(p); run(`firefox $(fname)`, wait=false))
     end
 end
 
 function plot_rt(p, gp; plot_results = false, kwargs...)
-    @unpack fdir, ps, ignores, chain, data = p
+    @unpack fdir, ps, ignores, chain, data, ftype = p
     recipe = Covid19Survey.RtsPlottingRecipe(data, gp)
     p = plot(recipe; kwargs...)
-    fname = normpath( fdir, savename("FIG-RT", ps, "html"; ignores) )
+    fname = normpath( fdir, savename("FIG-RT", ps, ftype; ignores) )
     savefig( p, fname )
     plot_results && display(p) #(display(p); run(`firefox $(fname)`, wait=false))
     return nothing
@@ -451,7 +452,7 @@ function plot_grouped_effects(effects;  xlabel = ""
 end
 
 function plot_effects(pp::PostProcessing, gp; plot_results = true, grouped = false, effect_on_Rt = 0., kwargs...)
-    @unpack fdir, ps, ignores, chain = pp
+    @unpack fdir, ps, ignores, chain, ftype = pp
     effects = effect_quantiles(pp, gp; effect_on_Rt, kwargs...)
 
     suffix = "-EFFECTS"
@@ -460,7 +461,7 @@ function plot_effects(pp::PostProcessing, gp; plot_results = true, grouped = fal
     xlabel = effect_on_Rt == 0 ? "effect size" : "change in Rt [\\%]"
     plot_effects = grouped ? plot_grouped_effects : plot_regional_effects
 
-    fname = normpath( fdir, savename("FIG"*suffix, ps, "html"; ignores) )
+    fname = normpath( fdir, savename("FIG"*suffix, ps, ftype; ignores) )
     p = plot_effects(effects; xlabel)
     savefig(p, fname )
     plot_results && display(p) #(display(p); run(`firefox $(fname)`, wait=false))
@@ -534,11 +535,11 @@ function finish(p::PostProcessing, diag)
     @show Covid19Survey.runtime(chain)
 end
 
-function postprocessing(fname; plot_results = false, exclude = [], warmup = nothing)
+function postprocessing(fname; plot_results = false, exclude = [], warmup = nothing, ftype = "html")
     ## ==========================================================================
     @info "load data"
     fdir, ps, ignores = parse_fname(fname; warmup)
-    p = PostProcessing(fdir, ps, ignores, exclude, fname)
+    p = PostProcessing(fdir, ps, ignores, exclude, fname, ftype)
     #savechain(p)
     ## ==========================================================================
     @info "plot chain"
